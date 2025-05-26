@@ -1,0 +1,37 @@
+# CMake build artifacts
+/build/
+/CMakeFiles/
+/CMakeCache.txt
+/Makefile
+/cmake_install.cmake
+/install_manifest.txt
+
+# Compiled binaries and libraries
+*.a
+*.so
+*.dll
+*.lib
+*.exe
+*.out
+
+# Object files
+*.o
+*.obj
+*.lo
+*.d
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*~
+
+# Testing artifacts
+/Testing/
+/CTestTestfile.cmake
+LastTest.log
+LastTestsFailed.log
+
+# User-local config
+*.user
+*.DS_Store
