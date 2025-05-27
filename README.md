@@ -42,7 +42,7 @@ sudo make install
 The project includes a demo CLI tool called `dump_elf`.
 
 ```bash
-./dump_elf <binary> [--symbols | --functions | --resolve <address>]
+./dump_elf <binary> [--symbols | --functions | --resolve <address> | --find <name>]
 ```
 
 ### Examples:
@@ -52,6 +52,7 @@ The project includes a demo CLI tool called `dump_elf`.
 ./dump_elf /bin/ls --symbols        # List all symbols
 ./dump_elf /bin/ls --functions      # List function symbols only
 ./dump_elf /bin/ls --resolve 401000 # Resolve a virtual address to a symbol
+./dump_elf /bin/ls --find main      # Find symbol by name
 ```
 
 ---
@@ -91,7 +92,7 @@ ctest --verbose
 | \[x]   | `.symtab` / `.dynsym`    | Extract symbols from standard ELF tables       |
 | \[x]   | CLI tool                 | Command-line utility `dump_elf`                |
 | \[x]   | Unit tests via CTest     | Basic test coverage using CTest                |
-| \[ ]   | `getSymbolByName(name)`  | Retrieve symbol by name                        |
+| \[x]   | `getSymbolByName(name)`  | Retrieve symbol by name                        |
 | \[ ]   | `getNearestSymbol(addr)` | Nearest symbol matching an address             |
 
 ### Planned Extensions

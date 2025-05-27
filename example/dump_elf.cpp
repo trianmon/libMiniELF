@@ -59,6 +59,18 @@ int main(int argc, char** argv) {
         return 0;
     }
 
+    // Find symbol by name
+    if (argc == 4 && std::string(argv[2]) == "--find") {
+        const auto* sym = elf.getSymbolByName(argv[3]);
+        if (sym) {
+            std::cout << "Found: " << sym->name << " @ 0x"
+                      << std::hex << sym->address << " (" << std::dec << sym->size << " bytes)\n";
+        } else {
+            std::cout << "Symbol not found: " << argv[3] << "\n";
+        }
+        return 0;
+    }
+    
     // Default: print all sections
     auto sections = elf.getSections();
     for (const auto& sec : sections) {

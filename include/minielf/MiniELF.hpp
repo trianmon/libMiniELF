@@ -132,6 +132,13 @@ public:
      */
     const Symbol* getSymbolByAddress(uint64_t addr) const;
 
+    /**
+     * @brief Find a symbol by its name.
+     * @param name Name of the symbol to search for.
+     * @return Pointer to Symbol if found, nullptr otherwise.
+     */
+    const Symbol* getSymbolByName(const std::string& name) const;
+
 private:
     std::string _filepath;           ///< Path to the ELF file
     bool _valid = false;             ///< ELF file validity flag

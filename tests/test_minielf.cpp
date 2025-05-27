@@ -3,34 +3,49 @@
 #include <iostream>
 
 /**
- * @brief Basic tests for the MiniELF parser.
+ * @brief Unit tests for the MiniELF parser.
  *
- * This test checks:
- *   - ELF file validity
- *   - Presence of sections and symbols
- *   - Existence and resolution of the "main" symbol
+ * This file contains basic tests to verify the functionality of the MiniELF class.
+ * The tests ensure that:
+ *   - The ELF file is valid and can be parsed.
+ *   - Sections and symbols are present in the ELF file.
+ *   - The "main" symbol exists and can be resolved by both name and address.
+ *   - The getSymbolByAddress and getSymbolByName methods work as expected.
+ *
+ * Usage:
+ *   Compile and run this test to verify the core MiniELF functionality.
  */
+
 int main() {
-    const char* path = "../tests/test_elf_file";  // Relative path from build/
+    // Path to a test ELF file (ensure this file exists for the test to pass)
+    const char* path = "../tests/test_elf_file";
     minielf::MiniELF elf(path);
     assert(elf.isValid());
 
+    // Retrieve and check ELF sections
     auto sections = elf.getSections();
     assert(!sections.empty());
 
+    // Retrieve and check ELF symbols
     auto symbols = elf.getSymbols();
     assert(!symbols.empty());
 
+    // Check existence of "main" symbol via getSymbols()
     bool has_main = false;
     for (const auto& sym : symbols) {
         if (sym.name == "main") {
             has_main = true;
+            // Verify symbol can be resolved by address
             const auto* resolved = elf.getSymbolByAddress(sym.address);
             assert(resolved && resolved->name == "main");
         }
     }
-
     assert(has_main);
+
+    // Verify symbol can be resolved by name
+    const auto* sym_by_name = elf.getSymbolByName("main");
+    assert(sym_by_name && sym_by_name->name == "main");
+
     std::cout << "All MiniELF tests passed.\n";
     return 0;
 }

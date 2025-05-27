@@ -52,6 +52,20 @@ const Symbol* MiniELF::getSymbolByAddress(uint64_t addr) const {
 }
 
 /**
+ * @brief Find a symbol by its name.
+ * @param name Name of the symbol to search for.
+ * @return Pointer to Symbol if found, nullptr otherwise.
+ */
+const Symbol* MiniELF::getSymbolByName(const std::string& name) const {
+    for (const auto& sym : _symbols) {
+        if (sym.name == name) {
+            return &sym;
+        }
+    }
+    return nullptr;
+}
+
+/**
  * @brief Parse the ELF file and populate sections and symbols.
  */
 void MiniELF::parse() {
