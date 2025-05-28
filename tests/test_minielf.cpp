@@ -3,14 +3,18 @@
 #include <iostream>
 
 /**
+ * @file test_minielf.cpp
  * @brief Unit tests for the MiniELF parser.
  *
  * This file contains basic tests to verify the functionality of the MiniELF class.
+ *
  * The tests ensure that:
  *   - The ELF file is valid and can be parsed.
  *   - Sections and symbols are present in the ELF file.
  *   - The "main" symbol exists and can be resolved by both name and address.
  *   - The getSymbolByAddress and getSymbolByName methods work as expected.
+ *   - The getNearestSymbol method finds the closest symbol at or before a given address.
+ *   - The getSectionByAddress method resolves the section containing a symbol's address.
  *
  * Usage:
  *   Compile and run this test to verify the core MiniELF functionality.
@@ -38,6 +42,10 @@ int main() {
             // Verify symbol can be resolved by address
             const auto* resolved = elf.getSymbolByAddress(sym.address);
             assert(resolved && resolved->name == "main");
+
+            // Section resolution by address of symbol
+            const auto* sec = elf.getSectionByAddress(sym.address);
+            assert(sec);
         }
     }
     assert(has_main);

@@ -146,6 +146,13 @@ public:
      */
     const Symbol* getNearestSymbol(uint64_t address) const;
 
+    /**
+     * @brief Get a section by its address.
+     * @param addr Address of the section to find.
+     * @return Pointer to Section if found, nullptr otherwise.
+     */
+    const Section* getSectionByAddress(uint64_t addr) const;
+
 private:
     std::string _filepath;           ///< Path to the ELF file
     bool _valid = false;             ///< ELF file validity flag

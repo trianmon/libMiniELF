@@ -43,7 +43,7 @@ sudo make install
 The included tool `dump_elf` provides quick introspection:
 
 ```bash
-./dump_elf <binary> [symbols | functions | resolve <address> | resolve-nearest <address> | find <name> | sections]
+./dump_elf <binary> [symbols | functions | resolve <address> | resolve-nearest <address> | find <name> | sections | section-of <address>]
 ```
 
 ### Supported commands:
@@ -56,6 +56,7 @@ The included tool `dump_elf` provides quick introspection:
 | `resolve <addr>`          | Find symbol at exact virtual address (hex)    |
 | `resolve-nearest <addr>`  | Find closest symbol before address            |
 | `find <name>`             | Look up symbol by name                        |
+| `section-of <addr>`       | Find section containing the given address     |
 
 ### Examples:
 
@@ -67,6 +68,7 @@ The included tool `dump_elf` provides quick introspection:
 ./dump_elf ../tests/test_elf_file resolve 0x1129           # Exact address match
 ./dump_elf ../tests/test_elf_file resolve-nearest 0x1130   # Closest symbol ≤ address
 ./dump_elf ../tests/test_elf_file find main                # Find symbol by name
+./dump_elf ../tests/test_elf_file section-of 0x1129        # Find section containing address
 ```
 
 ---
@@ -114,7 +116,7 @@ ctest --verbose
 | Status | Feature                    | Description                                         |
 |--------|----------------------------|-----------------------------------------------------|
 | [ ]    | DWARF support              | Separate module `libTinyDWARF` for debug symbols    |
-| [ ]    | Address-to-section mapping | Map address → section via `getSectionByAddress()`   |
+| [x]    | Address-to-section mapping | Map address → section via `getSectionByAddress()`   |
 | [ ]    | ELF metadata API           | Expose architecture, entry point, flags, etc.       |
 
 ---

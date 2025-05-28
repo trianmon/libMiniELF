@@ -7,7 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [v0.3.1] - 2025-05-29
+## [v0.4.0] - 2025-05-28
+
+### Added
+- `MiniELF::getSectionByAddress()` — resolve section containing a given virtual address
+- CLI command `section-of <addr>` to map address → section
+
+---
+
+## [v0.3.1] - 2025-05-28
 
 ### Changed
 - Refactored CLI argument parsing for `dump_elf`

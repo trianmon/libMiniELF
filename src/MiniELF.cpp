@@ -85,6 +85,20 @@ const Symbol* MiniELF::getNearestSymbol(uint64_t address) const {
 }
 
 /**
+ * @brief Get a section by its address.
+ * @param addr Address of the section to find.
+ * @return Pointer to Section if found, nullptr otherwise.
+ */
+const Section* MiniELF::getSectionByAddress(uint64_t addr) const {
+    for (const auto& sec : _sections) {
+        if (addr >= sec.address && addr < sec.address + sec.size) {
+            return &sec;
+        }
+    }
+    return nullptr;
+}
+
+/**
  * @brief Parse the ELF file and populate sections and symbols.
  */
 void MiniELF::parse() {

@@ -20,6 +20,7 @@
  *   resolve <hex_address>     Find symbol at exact address
  *   resolve-nearest <hex>     Find closest symbol before address
  *   find <symbol_name>        Lookup symbol by name
+ *   section-of <hex_address>  Find section containing the given address
  *
  * Examples:
  *   dump_elf my_binary.elf symbols
@@ -74,6 +75,7 @@ void printUsage() {
     std::cerr << "  resolve <hex_address>     Find symbol at exact address\n";
     std::cerr << "  resolve-nearest <hex>     Find closest symbol before address\n";
     std::cerr << "  find <symbol_name>        Lookup symbol by name\n\n";
+    std::cerr << "  section-of <hex_address>  Find section containing the given address\n";
     std::cerr << "Examples:\n";
     std::cerr << "  dump_elf my_binary.elf symbols\n";
     std::cerr << "  dump_elf my_binary.elf resolve 0x401000\n\n";
@@ -149,6 +151,23 @@ int main(int argc, char** argv) {
         } else {
             std::cout << "Symbol not found: " << argv[3] << "\n";
         }
+    } else if (command == "section-of" && argc == 4) {
+        uint64_t addr = 0;
+        try {
+            addr = std::stoull(argv[3], nullptr, 16);
+        } catch (...) {
+            std::cerr << "Invalid address: " << argv[3] << '\n';
+            return 1;
+        }
+
+        const auto* sec = elf.getSectionByAddress(addr);
+        if (sec) {
+            std::cout << "Address 0x" << std::hex << addr << " is in section: " << sec->name
+                    << " @ 0x" << sec->address << " (" << std::dec << sec->size << " bytes)\n";
+        } else {
+            std::cout << "Address 0x" << std::hex << addr << " not found in any section.\n";
+        }
+        return 0;
     } else {
         std::cerr << "Unknown or malformed command.\n";
         return 1;
