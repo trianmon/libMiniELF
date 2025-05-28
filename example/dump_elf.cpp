@@ -21,6 +21,7 @@
  *   resolve-nearest <hex>     Find closest symbol before address
  *   find <symbol_name>        Lookup symbol by name
  *   section-of <hex_address>  Find section containing the given address
+ *   metadata                  Show ELF metadata (entry point, architecture, type, flags)
  *
  * Examples:
  *   dump_elf my_binary.elf symbols
@@ -74,8 +75,9 @@ void printUsage() {
     std::cerr << "  functions                 Show function symbols only\n";
     std::cerr << "  resolve <hex_address>     Find symbol at exact address\n";
     std::cerr << "  resolve-nearest <hex>     Find closest symbol before address\n";
-    std::cerr << "  find <symbol_name>        Lookup symbol by name\n\n";
+    std::cerr << "  find <symbol_name>        Lookup symbol by name\n";
     std::cerr << "  section-of <hex_address>  Find section containing the given address\n";
+    std::cerr << "  metadata                  Show ELF metadata (entry point, architecture, type, flags)\n\n";
     std::cerr << "Examples:\n";
     std::cerr << "  dump_elf my_binary.elf symbols\n";
     std::cerr << "  dump_elf my_binary.elf resolve 0x401000\n\n";
@@ -89,6 +91,10 @@ bool isValidHex(const std::string& s) {
         if (!std::isxdigit(static_cast<unsigned char>(s[i]))) return false;
     }
     return true;
+}
+
+static void printHex64(uint64_t addr) {
+    std::cout << "0x" << std::hex << std::setw(8) << std::setfill('0') << addr << std::dec;
 }
 
 int main(int argc, char** argv) {
@@ -168,6 +174,16 @@ int main(int argc, char** argv) {
             std::cout << "Address 0x" << std::hex << addr << " not found in any section.\n";
         }
         return 0;
+    } else if (command == "metadata") {
+        const auto meta = elf.getMetadata();
+        std::cout << "ELF Metadata:\n";
+        std::cout << "  Entry point : ";
+        printHex64(meta.entry);
+        std::cout << "\n";
+        std::cout << "  Machine     : " << meta.machine << "\n";
+        std::cout << "  Type        : " << meta.type << "\n";
+        std::cout << "  Version     : " << meta.version << "\n";
+        std::cout << "  Flags       : " << meta.flags << "\n";
     } else {
         std::cerr << "Unknown or malformed command.\n";
         return 1;

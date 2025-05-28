@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v0.5.0] - 2025-05-28
+
+### Added
+- `MiniELF::getMetadata()` — retrieve ELF file metadata (entry point, machine, type, version, flags)
+- CLI command `metadata` in `dump_elf` to display parsed ELF metadata
+- Internal storage of `Elf64_Ehdr` as `MiniELF::_elfHeader` for structured access
+
+### Changed
+- `MiniELF::parse()` now retains ELF header for future inspection
+
+---
+
 ## [v0.4.0] - 2025-05-28
 
 ### Added

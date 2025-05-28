@@ -97,6 +97,17 @@ struct Section {
 };
 
 /**
+ * @brief Metadata for the ELF file.
+ */
+struct ElfMetadata {
+    uint16_t type = 0;
+    uint16_t machine = 0;
+    uint32_t version = 0;
+    uint64_t entry = 0;
+    uint32_t flags = 0;
+};
+
+/**
  * @brief Minimal ELF file parser and accessor.
  */
 class MiniELF {
@@ -153,12 +164,18 @@ public:
      */
     const Section* getSectionByAddress(uint64_t addr) const;
 
+    /**
+     * @brief Get the metadata of the ELF file.
+     * @return ElfMetadata containing entry point, architecture, type, and flags.
+     */
+    ElfMetadata getMetadata() const;
+
 private:
     std::string _filepath;           ///< Path to the ELF file
     bool _valid = false;             ///< ELF file validity flag
     std::vector<Section> _sections;  ///< Parsed sections
     std::vector<Symbol> _symbols;    ///< Parsed symbols
-
+    Elf64_Ehdr _elfHeader{};          ///< ELF header structure
     /**
      * @brief Parse the ELF file and populate sections and symbols.
      */

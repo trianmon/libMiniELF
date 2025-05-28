@@ -15,6 +15,7 @@
  *   - The getSymbolByAddress and getSymbolByName methods work as expected.
  *   - The getNearestSymbol method finds the closest symbol at or before a given address.
  *   - The getSectionByAddress method resolves the section containing a symbol's address.
+ *   - ELF metadata (entry point, version, machine, type) is correct and accessible.
  *
  * Usage:
  *   Compile and run this test to verify the core MiniELF functionality.
@@ -57,6 +58,13 @@ int main() {
     // Verify nearest symbol resolution
     const auto* nearest = elf.getNearestSymbol(sym_by_name->address + 1);  // addr > main
     assert(nearest && nearest->name == "main");
+
+    // Check metadata
+    auto meta = elf.getMetadata();
+    assert(meta.entry != 0);
+    assert(meta.version == 1);
+    assert(meta.machine == 62);  // EM_X86_64
+    assert(meta.type != 0);
 
     std::cout << "All MiniELF tests passed.\n";
     return 0;

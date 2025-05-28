@@ -43,7 +43,7 @@ sudo make install
 The included tool `dump_elf` provides quick introspection:
 
 ```bash
-./dump_elf <binary> [symbols | functions | resolve <address> | resolve-nearest <address> | find <name> | sections | section-of <address>]
+./dump_elf <binary> [symbols | functions | resolve <address> | resolve-nearest <address> | find <name> | sections | section-of <address> | metadata]
 ```
 
 ### Supported commands:
@@ -57,11 +57,12 @@ The included tool `dump_elf` provides quick introspection:
 | `resolve-nearest <addr>`  | Find closest symbol before address            |
 | `find <name>`             | Look up symbol by name                        |
 | `section-of <addr>`       | Find section containing the given address     |
+| `metadata`                | Show ELF metadata (entry point, arch, type)   |
 
 ### Examples:
 
 ```bash
-./dump_elf ../tests/test_elf_file                          # List available commands
+./dump_elf                                                 # List available commands
 ./dump_elf ../tests/test_elf_file sections                 # Print ELF sections
 ./dump_elf ../tests/test_elf_file symbols                  # Print all symbols
 ./dump_elf ../tests/test_elf_file functions                # Show only function symbols
@@ -69,6 +70,7 @@ The included tool `dump_elf` provides quick introspection:
 ./dump_elf ../tests/test_elf_file resolve-nearest 0x1130   # Closest symbol ≤ address
 ./dump_elf ../tests/test_elf_file find main                # Find symbol by name
 ./dump_elf ../tests/test_elf_file section-of 0x1129        # Find section containing address
+./dump_elf ../tests/test_elf_file metadata                 # Show ELF metadata
 ```
 
 ---
@@ -117,7 +119,7 @@ ctest --verbose
 |--------|----------------------------|-----------------------------------------------------|
 | [ ]    | DWARF support              | Separate module `libTinyDWARF` for debug symbols    |
 | [x]    | Address-to-section mapping | Map address → section via `getSectionByAddress()`   |
-| [ ]    | ELF metadata API           | Expose architecture, entry point, flags, etc.       |
+| [x]    | ELF metadata API           | Expose architecture, entry point, flags, etc.       |
 
 ---
 

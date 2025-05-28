@@ -99,6 +99,25 @@ const Section* MiniELF::getSectionByAddress(uint64_t addr) const {
 }
 
 /**
+ * @brief Get the metadata of the ELF file.
+ * @return ElfMetadata containing entry point, architecture, type, and flags.
+ */
+ElfMetadata MiniELF::getMetadata() const {
+    ElfMetadata meta{};
+    if (!isValid()) return meta;
+
+    meta.type = _elfHeader.e_type;
+    meta.machine = _elfHeader.e_machine;
+    meta.version = _elfHeader.e_version;
+    meta.entry = _elfHeader.e_entry;
+    meta.flags = _elfHeader.e_flags;
+
+    return meta;
+}
+
+
+
+/**
  * @brief Parse the ELF file and populate sections and symbols.
  */
 void MiniELF::parse() {
@@ -144,6 +163,8 @@ void MiniELF::parse() {
     std::vector<char> shstr(shstrtab.sh_size);
     file.seekg(shstrtab.sh_offset, std::ios::beg);
     file.read(shstr.data(), shstr.size());
+
+    _elfHeader = ehdr;
 
     // Populate sections
     for (const auto& sh : shdrs) {
