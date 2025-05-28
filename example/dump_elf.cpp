@@ -1,21 +1,97 @@
-#include "minielf/MiniELF.hpp"
-#include <iostream>
-
 /**
- * @brief Minimal ELF file dumper utility.
+ * @file dump_elf.cpp
+ * @brief MiniELF CLI - ELF64 Inspection Tool
+ *
+ * This command-line tool demonstrates usage of the MiniELF library for inspecting ELF64 binaries.
+ * It provides commands to:
+ *   - List all ELF sections
+ *   - List all symbols or only function symbols
+ *   - Resolve a symbol by its exact address
+ *   - Find the nearest symbol before a given address
+ *   - Lookup a symbol by name
  *
  * Usage:
- *   dump_elf <binary> [--symbols|--functions|--resolve <addr>]
+ *   dump_elf <binary> <command> [argument]
  *
- * Options:
- *   --symbols      Print all symbols in the ELF file.
- *   --functions    Print only function symbols.
- *   --resolve <a>  Resolve symbol by address (hex).
- *   (default)      Print all sections.
+ * Commands:
+ *   sections                  Show all ELF sections (default)
+ *   symbols                   List all symbols
+ *   functions                 Show function symbols only
+ *   resolve <hex_address>     Find symbol at exact address
+ *   resolve-nearest <hex>     Find closest symbol before address
+ *   find <symbol_name>        Lookup symbol by name
+ *
+ * Examples:
+ *   dump_elf my_binary.elf symbols
+ *   dump_elf my_binary.elf resolve 0x401000
  */
+
+#include "minielf/MiniELF.hpp"
+#include <iostream>
+#include <iomanip>
+#include <sstream>
+#include <cctype>
+
+// Prints a formatted table of ELF sections.
+void printSectionTable(const std::vector<minielf::Section>& sections) {
+    std::cout << std::left << std::setw(20) << "Address"
+              << std::setw(25) << "Name"
+              << "Size (bytes)\n";
+    std::cout << std::string(60, '-') << "\n";
+    for (const auto& sec : sections) {
+        std::cout << std::left
+                  << "0x" << std::setw(18) << std::hex << sec.address
+                  << std::setw(25) << sec.name
+                  << std::dec << sec.size << "\n";
+    }
+}
+
+// Prints a formatted table of ELF symbols, optionally filtering for functions only.
+void printSymbolTable(const std::vector<minielf::Symbol>& symbols, bool functionsOnly) {
+    std::cout << std::left << std::setw(20) << "Address"
+              << std::setw(35) << "Name"
+              << "Size (bytes)\n";
+    std::cout << std::string(70, '-') << "\n";
+    for (const auto& sym : symbols) {
+        if (functionsOnly && !sym.isFunction()) continue;
+        std::cout << std::left
+                  << "0x" << std::setw(18) << std::hex << sym.address
+                  << std::setw(35) << sym.name
+                  << std::dec << sym.size << "\n";
+    }
+}
+
+// Prints usage instructions for the CLI tool.
+void printUsage() {
+    std::cerr << "\nMiniELF CLI - ELF64 Inspection Tool\n";
+    std::cerr << "-------------------------------------\n";
+    std::cerr << "Usage:\n";
+    std::cerr << "  dump_elf <binary> <command> [argument]\n\n";
+    std::cerr << "Commands:\n";
+    std::cerr << "  sections                  Show all ELF sections (default)\n";
+    std::cerr << "  symbols                   List all symbols\n";
+    std::cerr << "  functions                 Show function symbols only\n";
+    std::cerr << "  resolve <hex_address>     Find symbol at exact address\n";
+    std::cerr << "  resolve-nearest <hex>     Find closest symbol before address\n";
+    std::cerr << "  find <symbol_name>        Lookup symbol by name\n\n";
+    std::cerr << "Examples:\n";
+    std::cerr << "  dump_elf my_binary.elf symbols\n";
+    std::cerr << "  dump_elf my_binary.elf resolve 0x401000\n\n";
+}
+
+bool isValidHex(const std::string& s) {
+    if (s.empty()) return false;
+    size_t start = (s.rfind("0x", 0) == 0 || s.rfind("0X", 0) == 0) ? 2 : 0;
+    if (start == s.size()) return false;
+    for (size_t i = start; i < s.size(); ++i) {
+        if (!std::isxdigit(static_cast<unsigned char>(s[i]))) return false;
+    }
+    return true;
+}
+
 int main(int argc, char** argv) {
     if (argc < 2) {
-        std::cerr << "Usage: dump_elf <binary> [--symbols|--functions|--resolve <addr>]\n";
+        printUsage();
         return 1;
     }
 
@@ -25,42 +101,47 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    // Print all symbols
-    if (argc >= 3 && std::string(argv[2]) == "--symbols") {
-        for (const auto& sym : elf.getSymbols()) {
-            std::cout << "[SYM] " << sym.name << " @ 0x"
-                      << std::hex << sym.address
-                      << " (" << std::dec << sym.size << " bytes)\n";
-        }
-        return 0;
-    }
+    std::string command = argc >= 3 ? argv[2] : "sections";
 
-    // Print only function symbols
-    if (argc >= 3 && std::string(argv[2]) == "--functions") {
-        for (const auto& sym : elf.getSymbols()) {
-            if (sym.isFunction()) {
-                std::cout << "[FUNC] " << sym.name << " @ 0x"
-                          << std::hex << sym.address
-                          << " (" << std::dec << sym.size << " bytes)\n";
-            }
+    if (command == "sections") {
+        printSectionTable(elf.getSections());
+    } else if (command == "symbols") {
+        printSymbolTable(elf.getSymbols(), false);
+    } else if (command == "functions") {
+        printSymbolTable(elf.getSymbols(), true);
+    } else if (command == "resolve" && argc == 4) {
+        std::string input = argv[3];
+        if (!isValidHex(input)) {
+            std::cerr << "Invalid address format: " << input << '\n';
+            return 1;
         }
-        return 0;
-    }
-
-    // Resolve symbol by address
-    if (argc >= 4 && std::string(argv[2]) == "--resolve") {
-        uint64_t addr = std::stoull(argv[3], nullptr, 16);  // hex
+        uint64_t addr = std::stoull(input, nullptr, 16);
         const auto* sym = elf.getSymbolByAddress(addr);
         if (sym) {
-            std::cout << "Resolved: " << sym->name << " @ 0x" << std::hex << sym->address << "\n";
+            std::cout << "Resolved: " << sym->name << "\t@ 0x"
+                    << std::hex << sym->address << std::dec
+                    << " (" << sym->size << " bytes)\n";
         } else {
-            std::cout << "No symbol found for 0x" << std::hex << addr << "\n";
+            std::cout << "No symbol found at 0x" << std::hex << addr << '\n';
         }
         return 0;
-    }
-
-    // Find symbol by name
-    if (argc == 4 && std::string(argv[2]) == "--find") {
+    } else if (command == "resolve-nearest" && argc == 4) {
+        std::string input = argv[3];
+        if (!isValidHex(input)) {
+            std::cerr << "Invalid address format: " << input << '\n';
+            return 1;
+        }
+        uint64_t addr = std::stoull(input, nullptr, 16);
+        const auto* sym = elf.getNearestSymbol(addr);
+        if (sym) {
+            std::cout << "Nearest: " << sym->name << "\t@ 0x"
+                    << std::hex << sym->address << std::dec
+                    << " (" << sym->size << " bytes)\n";
+        } else {
+            std::cout << "No symbol found before 0x" << std::hex << addr << '\n';
+        }
+        return 0;
+    } else if (command == "find" && argc == 4) {
         const auto* sym = elf.getSymbolByName(argv[3]);
         if (sym) {
             std::cout << "Found: " << sym->name << " @ 0x"
@@ -68,28 +149,9 @@ int main(int argc, char** argv) {
         } else {
             std::cout << "Symbol not found: " << argv[3] << "\n";
         }
-        return 0;
-    }
-    
-    // Find closest symbol with address <= given address
-    if (argc == 4 && std::string(argv[2]) == "--resolve-nearest") {
-        uint64_t addr = std::stoull(argv[3], nullptr, 16);
-        const auto* sym = elf.getNearestSymbol(addr);
-        if (sym) {
-            std::cout << "Nearest: " << sym->name << " @ 0x"
-                    << std::hex << sym->address
-                    << " (" << std::dec << sym->size << " bytes)\n";
-        } else {
-            std::cout << "No symbol found before 0x" << std::hex << addr << '\n';
-        }
-        return 0;
-    }
-    
-    // Default: print all sections
-    auto sections = elf.getSections();
-    for (const auto& sec : sections) {
-        std::cout << sec.name << " @ 0x" << std::hex << sec.address
-                  << " (" << std::dec << sec.size << " bytes)\n";
+    } else {
+        std::cerr << "Unknown or malformed command.\n";
+        return 1;
     }
 
     return 0;

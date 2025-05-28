@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [v0.3.0] - 2025-05-29
+## [v0.3.0] - 2025-05-28
 
 ### Added
 - `MiniELF::getNearestSymbol()` — resolve nearest symbol before a given address

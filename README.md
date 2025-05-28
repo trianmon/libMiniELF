@@ -43,18 +43,30 @@ sudo make install
 The included tool `dump_elf` provides quick introspection:
 
 ```bash
-./dump_elf <binary> [--symbols | --functions | --resolve <address> | --resolve-nearest <address> | --find <name>]
+./dump_elf <binary> [symbols | functions | resolve <address> | resolve-nearest <address> | find <name> | sections]
 ```
 
-### Examples
+### Supported commands:
+
+| Command                   | Description                                   |
+|---------------------------|-----------------------------------------------|
+| `sections`                | Show ELF sections                             |
+| `symbols`                 | List all symbols                              |
+| `functions`               | List only function symbols                    |
+| `resolve <addr>`          | Find symbol at exact virtual address (hex)    |
+| `resolve-nearest <addr>`  | Find closest symbol before address            |
+| `find <name>`             | Look up symbol by name                        |
+
+### Examples:
 
 ```bash
-./dump_elf /bin/ls                        # List ELF sections
-./dump_elf /bin/ls --symbols              # Print all symbols
-./dump_elf /bin/ls --functions            # Show only function symbols
-./dump_elf /bin/ls --resolve 0x401000     # Exact address match
-./dump_elf /bin/ls --resolve-nearest 0x4f # Closest symbol ≤ address
-./dump_elf /bin/ls --find main            # Find symbol by name
+./dump_elf ../tests/test_elf_file                          # List available commands
+./dump_elf ../tests/test_elf_file sections                 # Print ELF sections
+./dump_elf ../tests/test_elf_file symbols                  # Print all symbols
+./dump_elf ../tests/test_elf_file functions                # Show only function symbols
+./dump_elf ../tests/test_elf_file resolve 0x1129           # Exact address match
+./dump_elf ../tests/test_elf_file resolve-nearest 0x1130   # Closest symbol ≤ address
+./dump_elf ../tests/test_elf_file find main                # Find symbol by name
 ```
 
 ---
@@ -76,8 +88,6 @@ if (elf.isValid()) {
 ---
 
 ## Run Tests
-
-The project uses `CTest`. It compiles a small test ELF file for validation:
 
 ```bash
 cd build
