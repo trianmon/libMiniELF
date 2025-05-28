@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v0.3.1] - 2025-05-29
+
+### Changed
+- Refactored CLI argument parsing for `dump_elf`
+- Improved output formatting: aligned columns, consistent `0x` prefix
+- Enhanced error handling for malformed addresses in `resolve` and `resolve-nearest`
+
+### Added
+- Automatic usage message when no subcommand is provided
+- Graceful fallback for invalid arguments (e.g. `resolve asdf`, `resolve 0xz`)
+
+---
+
 ## [v0.3.0] - 2025-05-28
 
 ### Added
