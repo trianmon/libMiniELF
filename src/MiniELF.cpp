@@ -66,6 +66,25 @@ const Symbol* MiniELF::getSymbolByName(const std::string& name) const {
 }
 
 /**
+ * @brief Find the nearest symbol with address <= given address.
+ * @param address The address to resolve.
+ * @return Pointer to nearest Symbol if found, nullptr otherwise.
+ */
+const Symbol* MiniELF::getNearestSymbol(uint64_t address) const {
+    const Symbol* nearest = nullptr;
+    uint64_t nearest_addr = 0;
+
+    for (const auto& sym : _symbols) {
+        if (sym.address <= address && (!nearest || sym.address > nearest_addr)) {
+            nearest = &sym;
+            nearest_addr = sym.address;
+        }
+    }
+
+    return nearest;
+}
+
+/**
  * @brief Parse the ELF file and populate sections and symbols.
  */
 void MiniELF::parse() {

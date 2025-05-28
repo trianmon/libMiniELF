@@ -1,21 +1,22 @@
 # libMiniELF
 
-**libMiniELF** is a minimal, dependency-free C++ library for parsing ELF64 binaries. It provides access to ELF headers, sections, symbols (from `.symtab` and `.dynsym`), and supports symbol resolution.
+**libMiniELF** is a minimal, dependency-free C++ library for parsing ELF64 binaries.  
+It allows inspection of ELF headers, sections, symbol tables (`.symtab` and `.dynsym`), and address resolution — all in a clean and embeddable API.
 
 ---
 
 ## Features
 
-| Feature                   | Description                                    |
-| ------------------------- | ---------------------------------------------- |
-| **ELF64 support**         | Parses modern 64-bit ELF binaries              |
-| **Symbol table parsing**  | Reads both `.symtab` and `.dynsym` sections    |
-| **Section/symbol access** | Lists sections, symbols, and functions         |
-| **Address resolution**    | Resolves virtual addresses to symbol names     |
-| **ELF32 detection**       | Gracefully skips unsupported ELF32 files       |
-| **CLI utility**           | Provides `dump_elf` tool for binary inspection |
-| **Unit tested**           | Includes basic tests using `CTest`             |
-| **Easy integration**      | Installable via `make install`                 |
+| Feature                   | Description                                      |
+|---------------------------|--------------------------------------------------|
+| **ELF64 support**         | Parses modern 64-bit ELF binaries                |
+| **Symbol table parsing**  | Reads `.symtab` and `.dynsym` symbols            |
+| **Section/symbol access** | Lists ELF sections, functions, and symbols       |
+| **Address resolution**    | Resolves addresses to closest matching symbols   |
+| **ELF32 detection**       | Gracefully skips unsupported 32-bit binaries     |
+| **CLI utility**           | Includes `dump_elf` tool for ELF inspection      |
+| **Unit tested**           | CTest-based validation with real ELF files       |
+| **Easy integration**      | Header-only usage + `make install` support       |
 
 ---
 
@@ -26,12 +27,12 @@
 git clone https://github.com/trianmon/libMiniELF.git
 cd libMiniELF
 
-# Build the project
+# Configure & build
 mkdir build && cd build
 cmake ..
 make -j$(nproc)
 
-# Optionally install
+# Optional install
 sudo make install
 ```
 
@@ -39,20 +40,21 @@ sudo make install
 
 ## CLI Usage
 
-The project includes a demo CLI tool called `dump_elf`.
+The included tool `dump_elf` provides quick introspection:
 
 ```bash
-./dump_elf <binary> [--symbols | --functions | --resolve <address> | --find <name>]
+./dump_elf <binary> [--symbols | --functions | --resolve <address> | --resolve-nearest <address> | --find <name>]
 ```
 
-### Examples:
+### Examples
 
 ```bash
-./dump_elf /bin/ls                  # List ELF sections
-./dump_elf /bin/ls --symbols        # List all symbols
-./dump_elf /bin/ls --functions      # List function symbols only
-./dump_elf /bin/ls --resolve 401000 # Resolve a virtual address to a symbol
-./dump_elf /bin/ls --find main      # Find symbol by name
+./dump_elf /bin/ls                        # List ELF sections
+./dump_elf /bin/ls --symbols              # Print all symbols
+./dump_elf /bin/ls --functions            # Show only function symbols
+./dump_elf /bin/ls --resolve 0x401000     # Exact address match
+./dump_elf /bin/ls --resolve-nearest 0x4f # Closest symbol ≤ address
+./dump_elf /bin/ls --find main            # Find symbol by name
 ```
 
 ---
@@ -62,11 +64,12 @@ The project includes a demo CLI tool called `dump_elf`.
 ```cpp
 #include <minielf/MiniELF.hpp>
 
-minielf::MiniELF elf("/path/to/binary");
+minielf::MiniELF elf("binary.elf");
 if (elf.isValid()) {
-    auto sections = elf.getSections();
     auto symbols = elf.getSymbols();
-    const auto* sym = elf.getSymbolByAddress(0x1234);
+    const auto* exact = elf.getSymbolByAddress(0x1234);
+    const auto* nearest = elf.getNearestSymbol(0x1234);
+    const auto* byName = elf.getSymbolByName("main");
 }
 ```
 
@@ -74,9 +77,10 @@ if (elf.isValid()) {
 
 ## Run Tests
 
-The project uses `CTest` for unit testing. A minimal ELF file is compiled automatically for testing:
+The project uses `CTest`. It compiles a small test ELF file for validation:
 
 ```bash
+cd build
 ctest --verbose
 ```
 
@@ -87,24 +91,24 @@ ctest --verbose
 ### Core Enhancements
 
 | Status | Feature                  | Description                                    |
-| ------ | ------------------------ | ---------------------------------------------- |
-| \[x]   | ELF64 parsing            | Parse headers and sections from ELF64 binaries |
-| \[x]   | `.symtab` / `.dynsym`    | Extract symbols from standard ELF tables       |
-| \[x]   | CLI tool                 | Command-line utility `dump_elf`                |
-| \[x]   | Unit tests via CTest     | Basic test coverage using CTest                |
-| \[x]   | `getSymbolByName(name)`  | Retrieve symbol by name                        |
-| \[ ]   | `getNearestSymbol(addr)` | Nearest symbol matching an address             |
+|--------|--------------------------|------------------------------------------------|
+| [x]    | ELF64 parsing            | Parse headers and sections                     |
+| [x]    | `.symtab` / `.dynsym`    | Symbol extraction                              |
+| [x]    | CLI tool                 | `dump_elf` utility                             |
+| [x]    | Unit tests via CTest     | Automated test coverage                        |
+| [x]    | `getSymbolByName(name)`  | Resolve symbols by name                        |
+| [x]    | `getNearestSymbol(addr)` | Find closest symbol before an address          |
 
 ### Planned Extensions
 
 | Status | Feature                    | Description                                         |
-| ------ | -------------------------- | --------------------------------------------------- |
-| \[ ]   | DWARF support              | Separate library (`libTinyDWARF`) for debug info    |
-| \[ ]   | Address-to-section mapping | Map address to section with `getSectionByAddress()` |
-| \[ ]   | ELF metadata API           | Provide entry point, architecture, etc.             |
+|--------|----------------------------|-----------------------------------------------------|
+| [ ]    | DWARF support              | Separate module `libTinyDWARF` for debug symbols    |
+| [ ]    | Address-to-section mapping | Map address → section via `getSectionByAddress()`   |
+| [ ]    | ELF metadata API           | Expose architecture, entry point, flags, etc.       |
 
 ---
 
 ## License
 
-This project is licensed under the MIT License.
+MIT © 2025 [trianmon](https://github.com/trianmon)

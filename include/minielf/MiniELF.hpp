@@ -139,6 +139,13 @@ public:
      */
     const Symbol* getSymbolByName(const std::string& name) const;
 
+    /**
+     * @brief Find the nearest symbol with address <= given address.
+     * @param address The address to resolve.
+     * @return Pointer to nearest Symbol if found, nullptr otherwise.
+     */
+    const Symbol* getNearestSymbol(uint64_t address) const;
+
 private:
     std::string _filepath;           ///< Path to the ELF file
     bool _valid = false;             ///< ELF file validity flag

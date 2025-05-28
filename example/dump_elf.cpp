@@ -71,6 +71,20 @@ int main(int argc, char** argv) {
         return 0;
     }
     
+    // Find closest symbol with address <= given address
+    if (argc == 4 && std::string(argv[2]) == "--resolve-nearest") {
+        uint64_t addr = std::stoull(argv[3], nullptr, 16);
+        const auto* sym = elf.getNearestSymbol(addr);
+        if (sym) {
+            std::cout << "Nearest: " << sym->name << " @ 0x"
+                    << std::hex << sym->address
+                    << " (" << std::dec << sym->size << " bytes)\n";
+        } else {
+            std::cout << "No symbol found before 0x" << std::hex << addr << '\n';
+        }
+        return 0;
+    }
+    
     // Default: print all sections
     auto sections = elf.getSections();
     for (const auto& sec : sections) {

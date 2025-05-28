@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v0.3.0] - 2025-05-29
+
+### Added
+- `MiniELF::getNearestSymbol()` — resolve nearest symbol before a given address
+- CLI flag `--resolve-nearest <addr>` in `dump_elf`
+- Unit test for `getNearestSymbol()`
+
+---
+
 ## [v0.2.0] - 2025-05-27
 
 ### Added

@@ -46,6 +46,10 @@ int main() {
     const auto* sym_by_name = elf.getSymbolByName("main");
     assert(sym_by_name && sym_by_name->name == "main");
 
+    // Verify nearest symbol resolution
+    const auto* nearest = elf.getNearestSymbol(sym_by_name->address + 1);  // addr > main
+    assert(nearest && nearest->name == "main");
+
     std::cout << "All MiniELF tests passed.\n";
     return 0;
 }
