@@ -4,6 +4,7 @@
 #include <vector>
 #include <cstdint>
 #include <optional>
+#include <unordered_map>
 
 namespace minielf {
 
@@ -190,6 +191,16 @@ private:
      */
     void parseSymbols(std::ifstream& file, const std::vector<char>& shstrtab,
                       const std::vector<Elf64_Shdr>& shdrs, const Elf64_Ehdr& ehdr);
+
+    mutable std::unordered_map<std::string, const Symbol*> _symbolByName;
+    mutable std::vector<const Symbol*> _symbolsSortedByAddr;
+    mutable std::vector<const Section*> _sectionsSortedByAddr;
+    mutable bool _lookupBuilt = false;
+    /**
+     * @brief Build lookups for symbols and sections.
+     * This is called lazily to avoid unnecessary overhead if not needed.
+     */
+    void buildLookups() const;
 };
 
 } // namespace minielf

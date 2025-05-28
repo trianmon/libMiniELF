@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <algorithm>
 
 namespace minielf {
 
@@ -11,6 +12,33 @@ namespace minielf {
  */
 MiniELF::MiniELF(const std::string& filepath) : _filepath(filepath) {
     parse();
+    // Prepare sorted pointers for fast lookup
+    for (const auto& sym : _symbols) _symbolsSortedByAddr.push_back(&sym);
+    for (const auto& sec : _sections) _sectionsSortedByAddr.push_back(&sec);
+    _lookupBuilt = false;
+}
+
+
+/**
+ * @brief Build fast lookup tables for symbols and sections.
+ *
+ * This method initializes and sorts internal data structures to enable efficient
+ * symbol and section lookups by name and address. It constructs a hash map for
+ * symbol name lookup and sorts vectors of pointers for binary search by address.
+ * The lookup tables are built only once and reused for subsequent queries.
+ */
+void MiniELF::buildLookups() const {
+    if (_lookupBuilt) return;
+    _symbolByName.clear();
+    for (const auto& sym : _symbols) {
+        _symbolByName[sym.name] = &sym;
+    }
+    // Sort symbols and sections by address for binary search
+    std::sort(_symbolsSortedByAddr.begin(), _symbolsSortedByAddr.end(),
+        [](const Symbol* a, const Symbol* b) { return a->address < b->address; });
+    std::sort(_sectionsSortedByAddr.begin(), _sectionsSortedByAddr.end(),
+        [](const Section* a, const Section* b) { return a->address < b->address; });
+    _lookupBuilt = true;
 }
 
 /**
@@ -43,10 +71,17 @@ std::vector<Symbol> MiniELF::getSymbols() const {
  * @return Pointer to Symbol if found, nullptr otherwise.
  */
 const Symbol* MiniELF::getSymbolByAddress(uint64_t addr) const {
-    for (const auto& sym : _symbols) {
-        if (sym.address <= addr && addr < sym.address + sym.size) {
-            return &sym;
-        }
+    buildLookups();
+    auto it = std::lower_bound(
+        _symbolsSortedByAddr.begin(), _symbolsSortedByAddr.end(), addr,
+        [](const Symbol* sym, uint64_t address) {
+            return sym->address + sym->size <= address;
+        });
+    if (it != _symbolsSortedByAddr.begin()) --it;
+    if (it != _symbolsSortedByAddr.end()) {
+        const Symbol* sym = *it;
+        if (sym->address <= addr && addr < sym->address + sym->size)
+            return sym;
     }
     return nullptr;
 }
@@ -57,12 +92,9 @@ const Symbol* MiniELF::getSymbolByAddress(uint64_t addr) const {
  * @return Pointer to Symbol if found, nullptr otherwise.
  */
 const Symbol* MiniELF::getSymbolByName(const std::string& name) const {
-    for (const auto& sym : _symbols) {
-        if (sym.name == name) {
-            return &sym;
-        }
-    }
-    return nullptr;
+    buildLookups();
+    auto it = _symbolByName.find(name);
+    return it != _symbolByName.end() ? it->second : nullptr;
 }
 
 /**
@@ -71,17 +103,15 @@ const Symbol* MiniELF::getSymbolByName(const std::string& name) const {
  * @return Pointer to nearest Symbol if found, nullptr otherwise.
  */
 const Symbol* MiniELF::getNearestSymbol(uint64_t address) const {
-    const Symbol* nearest = nullptr;
-    uint64_t nearest_addr = 0;
-
-    for (const auto& sym : _symbols) {
-        if (sym.address <= address && (!nearest || sym.address > nearest_addr)) {
-            nearest = &sym;
-            nearest_addr = sym.address;
-        }
-    }
-
-    return nearest;
+    buildLookups();
+    auto it = std::upper_bound(
+        _symbolsSortedByAddr.begin(), _symbolsSortedByAddr.end(), address,
+        [](uint64_t address, const Symbol* sym) {
+            return address < sym->address;
+        });
+    if (it == _symbolsSortedByAddr.begin()) return nullptr;
+    --it;
+    return *it;
 }
 
 /**
@@ -90,11 +120,27 @@ const Symbol* MiniELF::getNearestSymbol(uint64_t address) const {
  * @return Pointer to Section if found, nullptr otherwise.
  */
 const Section* MiniELF::getSectionByAddress(uint64_t addr) const {
-    for (const auto& sec : _sections) {
-        if (addr >= sec.address && addr < sec.address + sec.size) {
-            return &sec;
-        }
+    buildLookups();
+
+    auto it = std::lower_bound(
+        _sectionsSortedByAddr.begin(), _sectionsSortedByAddr.end(), addr,
+        [](const Section* sec, uint64_t address) {
+            return sec->address + sec->size <= address;
+        });
+
+    if (it != _sectionsSortedByAddr.end()) {
+        const Section* sec = *it;
+        if (sec->address <= addr && addr < sec->address + sec->size)
+            return sec;
     }
+
+    if (it != _sectionsSortedByAddr.begin()) {
+        --it;
+        const Section* sec = *it;
+        if (sec->address <= addr && addr < sec->address + sec->size)
+            return sec;
+    }
+
     return nullptr;
 }
 
@@ -114,8 +160,6 @@ ElfMetadata MiniELF::getMetadata() const {
 
     return meta;
 }
-
-
 
 /**
  * @brief Parse the ELF file and populate sections and symbols.
@@ -200,8 +244,7 @@ void MiniELF::parseSymbols(std::ifstream& file, const std::vector<char>& shstrta
             symtab_hdr = sh;
             found_symtab = true;
         } else if (sh.sh_type == 3 /* SHT_STRTAB */ &&
-                   i != ehdr.e_shstrndx &&
-                   (!found_symtab || symtab_hdr.sh_link == i)) {
+            i != ehdr.e_shstrndx) {
             strtab_hdr = sh;
             found_strtab = true;
         }

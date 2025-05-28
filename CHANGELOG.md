@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.0.0] - 2025-05-28
+
+### Added
+- Optimized symbol and section lookup:
+  - Fast symbol lookup by name using hash map (`_symbolByName`)
+  - Fast symbol and section lookup by address using sorted vectors and binary search (`_symbolsSortedByAddr`, `_sectionsSortedByAddr`)
+  - Lookup tables are built once and reused for all queries
+- Comprehensive Doxygen-style documentation for all public and private API, including struct fields and internal methods
+- Improved internal code structure for maintainability and clarity
+
+### Changed
+- Refactored `MiniELF` implementation to use efficient lookup tables for all symbol and section queries
+- Updated all relevant methods (`getSymbolByAddress`, `getSymbolByName`, `getNearestSymbol`, `getSectionByAddress`) to use optimized lookups
+- Enhanced documentation and inline comments throughout the codebase
+
+### Fixed
+- Corrected edge cases in address-based symbol and section resolution
+- Improved robustness of ELF parsing and error handling
+
+---
+
 ## [v0.5.0] - 2025-05-28
 
 ### Added

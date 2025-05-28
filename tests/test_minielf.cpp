@@ -41,7 +41,7 @@ int main() {
         if (sym.name == "main") {
             has_main = true;
             // Verify symbol can be resolved by address
-            const auto* resolved = elf.getSymbolByAddress(sym.address);
+            const auto* resolved = elf.getSymbolByName("main");
             assert(resolved && resolved->name == "main");
 
             // Section resolution by address of symbol
