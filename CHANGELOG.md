@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.1.0] - 2025-06-03
+
+### Added
+- Error handling interface: errors are now captured and available via `getLastError()`, not printed directly to stderr
+- `getSectionByName()` method for fast section lookup by name
+- CLI command `section <name>` to find a section by name
+- Example usage of section lookup by name and error handling added to README and tests
+- Improved unit tests: check for section lookup by name
+
+### Changed
+- All internal parsing and ELF errors are now stored and accessible via API, not printed directly
+- Documentation and examples updated to reflect new error handling and section lookup features
+
+### Fixed
+- Fixed potential issues with repeated filling of sections and symbols on multiple parses
+- Improved CLI stability and predictability when handling errors and invalid input
+
+---
+
 ## [v1.0.0] - 2025-05-28
 
 ### Added

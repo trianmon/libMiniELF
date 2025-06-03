@@ -77,6 +77,7 @@ void printUsage() {
     std::cerr << "  resolve-nearest <hex>     Find closest symbol before address\n";
     std::cerr << "  find <symbol_name>        Lookup symbol by name\n";
     std::cerr << "  section-of <hex_address>  Find section containing the given address\n";
+    std::cerr << "  section <section_name>    Lookup section by name\n";
     std::cerr << "  metadata                  Show ELF metadata (entry point, architecture, type, flags)\n\n";
     std::cerr << "Examples:\n";
     std::cerr << "  dump_elf my_binary.elf symbols\n";
@@ -105,7 +106,7 @@ int main(int argc, char** argv) {
 
     minielf::MiniELF elf(argv[1]);
     if (!elf.isValid()) {
-        std::cerr << "Failed to parse ELF file.\n";
+        std::cerr << elf.getLastError() << "\n";
         return 1;
     }
 
@@ -172,6 +173,17 @@ int main(int argc, char** argv) {
                     << " @ 0x" << sec->address << " (" << std::dec << sec->size << " bytes)\n";
         } else {
             std::cout << "Address 0x" << std::hex << addr << " not found in any section.\n";
+        }
+        return 0;
+    } else if (command == "section" && argc == 4) {
+        // Lookup section by name
+        const auto* sec = elf.getSectionByName(argv[3]);
+        if (sec) {
+            std::cout << "Section: " << sec->name
+                    << " @ 0x" << std::hex << sec->address
+                    << " (" << std::dec << sec->size << " bytes)\n";
+        } else {
+            std::cout << "Section not found: " << argv[3] << "\n";
         }
         return 0;
     } else if (command == "metadata") {

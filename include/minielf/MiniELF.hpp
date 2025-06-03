@@ -166,21 +166,42 @@ public:
     const Section* getSectionByAddress(uint64_t addr) const;
 
     /**
+     * @brief Get a section by its name.
+     * @param name Name of the section to search for.
+     * @return Pointer to Section if found, nullptr otherwise.
+     */
+    const Section* getSectionByName(const std::string& name) const;
+
+    /**
      * @brief Get the metadata of the ELF file.
      * @return ElfMetadata containing entry point, architecture, type, and flags.
      */
     ElfMetadata getMetadata() const;
+
+    /**
+     * @brief Get the last error message.
+     * @return Last error message as a string.
+     */
+    std::string getLastError() const { return _lastError; }
 
 private:
     std::string _filepath;           ///< Path to the ELF file
     bool _valid = false;             ///< ELF file validity flag
     std::vector<Section> _sections;  ///< Parsed sections
     std::vector<Symbol> _symbols;    ///< Parsed symbols
-    Elf64_Ehdr _elfHeader{};          ///< ELF header structure
+    Elf64_Ehdr _elfHeader{};         ///< ELF header structure
+    std::string _lastError;          ///< Last error message
+
     /**
      * @brief Parse the ELF file and populate sections and symbols.
      */
     void parse();
+
+    /**
+     * @brief Set the last error message.
+     * @param msg Error message to set.
+     */
+    void setError(const std::string& msg) { _lastError = msg; }
 
     /**
      * @brief Parse symbols from the ELF file.
@@ -195,7 +216,9 @@ private:
     mutable std::unordered_map<std::string, const Symbol*> _symbolByName;
     mutable std::vector<const Symbol*> _symbolsSortedByAddr;
     mutable std::vector<const Section*> _sectionsSortedByAddr;
+    mutable std::unordered_map<std::string, const Section*> _sectionByName;
     mutable bool _lookupBuilt = false;
+
     /**
      * @brief Build lookups for symbols and sections.
      * This is called lazily to avoid unnecessary overhead if not needed.

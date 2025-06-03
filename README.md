@@ -57,6 +57,7 @@ The included tool `dump_elf` provides quick introspection:
 | `resolve-nearest <addr>`  | Find closest symbol before address            |
 | `find <name>`             | Look up symbol by name                        |
 | `section-of <addr>`       | Find section containing the given address     |
+| `section <name>`          | Find section by name                          |
 | `metadata`                | Show ELF metadata (entry point, arch, type)   |
 
 ### Examples:
@@ -70,6 +71,7 @@ The included tool `dump_elf` provides quick introspection:
 ./dump_elf ../tests/test_elf_file resolve-nearest 0x1130   # Closest symbol ≤ address
 ./dump_elf ../tests/test_elf_file find main                # Find symbol by name
 ./dump_elf ../tests/test_elf_file section-of 0x1129        # Find section containing address
+./dump_elf ../tests/test_elf_file section .text            # Find section by name
 ./dump_elf ../tests/test_elf_file metadata                 # Show ELF metadata
 ```
 
@@ -79,13 +81,74 @@ The included tool `dump_elf` provides quick introspection:
 
 ```cpp
 #include <minielf/MiniELF.hpp>
+#include <iostream>
 
-minielf::MiniELF elf("binary.elf");
-if (elf.isValid()) {
+int main() {
+    minielf::MiniELF elf("binary.elf");
+    if (!elf.isValid()) {
+        std::cerr << "Error: " << elf.getLastError() << std::endl;
+        return 1;
+    }
+
+    // Get all sections
+    auto sections = elf.getSections();
+    std::cout << "Sections count: " << sections.size() << std::endl;
+
+    // Find section by name
+    const auto* textSec = elf.getSectionByName(".text");
+    if (textSec) {
+        std::cout << ".text section at 0x" << std::hex << textSec->address
+                  << " (" << std::dec << textSec->size << " bytes)\n";
+    }
+
+    // Get all symbols
     auto symbols = elf.getSymbols();
-    const auto* exact = elf.getSymbolByAddress(0x1234);
+    std::cout << "Symbols count: " << symbols.size() << std::endl;
+
+    // Find symbol by name
+    const auto* mainSym = elf.getSymbolByName("main");
+    if (mainSym) {
+        std::cout << "main symbol at 0x" << std::hex << mainSym->address
+                  << " (" << std::dec << mainSym->size << " bytes)\n";
+    }
+
+    // Find symbol by address
+    const auto* symByAddr = elf.getSymbolByAddress(0x1234);
+    if (symByAddr) {
+        std::cout << "Symbol at 0x1234: " << symByAddr->name << std::endl;
+    }
+
+    // Find nearest symbol before address
     const auto* nearest = elf.getNearestSymbol(0x1234);
-    const auto* byName = elf.getSymbolByName("main");
+    if (nearest) {
+        std::cout << "Nearest symbol before 0x1234: " << nearest->name << std::endl;
+    }
+
+    // Find section by address
+    const auto* secByAddr = elf.getSectionByAddress(0x1234);
+    if (secByAddr) {
+        std::cout << "Section for 0x1234: " << secByAddr->name << std::endl;
+    }
+
+    // Get ELF metadata
+    auto meta = elf.getMetadata();
+    std::cout << "Entry point: 0x" << std::hex << meta.entry << std::dec << std::endl;
+    std::cout << "Machine: " << meta.machine << ", Type: " << meta.type << std::endl;
+
+    return 0;
+}
+```
+
+---
+
+## Error Handling
+
+If parsing fails or the ELF file is invalid, you can retrieve the error message via:
+
+```cpp
+minielf::MiniELF elf("binary.elf");
+if (!elf.isValid()) {
+    std::cerr << elf.getLastError() << std::endl;
 }
 ```
 

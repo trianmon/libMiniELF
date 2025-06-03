@@ -31,6 +31,11 @@ int main() {
     auto sections = elf.getSections();
     assert(!sections.empty());
 
+    // Check existence of ".text" section
+    const auto* text_sec = elf.getSectionByName(".text");
+    assert(text_sec && text_sec->name == ".text");
+    assert(text_sec->size > 0);
+
     // Retrieve and check ELF symbols
     auto symbols = elf.getSymbols();
     assert(!symbols.empty());

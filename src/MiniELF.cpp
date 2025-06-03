@@ -33,6 +33,11 @@ void MiniELF::buildLookups() const {
     for (const auto& sym : _symbols) {
         _symbolByName[sym.name] = &sym;
     }
+    // Add section name lookup
+    _sectionByName.clear();
+    for (const auto& sec : _sections) {
+        _sectionByName[sec.name] = &sec;
+    }
     // Sort symbols and sections by address for binary search
     std::sort(_symbolsSortedByAddr.begin(), _symbolsSortedByAddr.end(),
         [](const Symbol* a, const Symbol* b) { return a->address < b->address; });
@@ -145,6 +150,17 @@ const Section* MiniELF::getSectionByAddress(uint64_t addr) const {
 }
 
 /**
+ * @brief Get a section by its name.
+ * @param name Name of the section to search for.
+ * @return Pointer to Section if found, nullptr otherwise.
+ */
+const Section* MiniELF::getSectionByName(const std::string& name) const {
+    buildLookups();
+    auto it = _sectionByName.find(name);
+    return it != _sectionByName.end() ? it->second : nullptr;
+}
+
+/**
  * @brief Get the metadata of the ELF file.
  * @return ElfMetadata containing entry point, architecture, type, and flags.
  */
@@ -167,31 +183,30 @@ ElfMetadata MiniELF::getMetadata() const {
 void MiniELF::parse() {
     std::ifstream file(_filepath, std::ios::binary);
     if (!file) {
-        std::cerr << "MiniELF error: failed to open file: " << _filepath << "\n";
+        setError("MiniELF error: failed to open file: " + _filepath);
         return;
     }
 
     Elf64_Ehdr ehdr{};
     file.read(reinterpret_cast<char*>(&ehdr), sizeof(ehdr));
     if (file.gcount() != sizeof(ehdr)) {
-        std::cerr << "MiniELF error: failed to read ELF header\n";
+        setError("MiniELF error: failed to read ELF header");
         return;
     }
 
-    // Check ELF magic
     if (ehdr.e_ident[0] != 0x7f || ehdr.e_ident[1] != 'E' ||
         ehdr.e_ident[2] != 'L'  || ehdr.e_ident[3] != 'F') {
-        std::cerr << "MiniELF error: not an ELF file\n";
+        setError("MiniELF error: not an ELF file");
         return;
     }
 
     if (ehdr.e_ident[4] != 2 /* ELFCLASS64 */) {
-        std::cerr << "MiniELF error: ELF32 not supported yet\n";
+        setError("MiniELF error: ELF32 not supported yet");
         return;
     }
 
     if (ehdr.e_shoff == 0 || ehdr.e_shnum == 0) {
-        std::cerr << "MiniELF error: no section headers\n";
+        setError("MiniELF error: no section headers");
         return;
     }
 
