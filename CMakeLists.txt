@@ -23,11 +23,15 @@ target_link_libraries(dump_elf minielf)
 add_executable(test_elf_file tests/test.c)
 set_target_properties(test_elf_file PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/tests)
 
-# Tests (if available)
-enable_testing()
-add_executable(test_minielf tests/test_minielf.cpp)
-target_link_libraries(test_minielf minielf)
-add_test(NAME test_minielf COMMAND test_minielf)
+# Tests
+option(MINIELF_BUILD_TESTS "Build tests for MiniELF" ON)
+
+if(MINIELF_BUILD_TESTS)
+    enable_testing()
+    add_executable(test_minielf tests/test_minielf.cpp)
+    target_link_libraries(test_minielf minielf)
+    add_test(NAME test_minielf COMMAND test_minielf)
+endif()
 
 # Installation
 install(TARGETS minielf

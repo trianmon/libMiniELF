@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.1.1] - 2025-06-08
+
+### Added
+- CMake option `MINIELF_BUILD_TESTS` (default: `ON`) to optionally disable building internal tests
+
+---
+
 ## [v1.1.0] - 2025-06-03
 
 ### Added
