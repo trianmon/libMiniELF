@@ -32,7 +32,9 @@ void MiniELF::buildLookups() const {
     if (_lookupBuilt) return;
     _symbolByName.clear();
     for (const auto& sym : _symbols) {
-        _symbolByName[sym.name] = &sym;
+        if (!sym.name.empty()) { 
+            _symbolByName[sym.name] = &sym;
+        }
     }
     // Add section name lookup
     _sectionByName.clear();
@@ -229,7 +231,20 @@ void MiniELF::parse() {
     // Populate sections
     for (const auto& sh : shdrs) {
         Section sec;
-        sec.name = std::string(&shstr[sh.sh_name]);
+
+        if (!shstr.empty() && sh.sh_name < shstr.size()) {
+            const char* namePtr = &shstr[sh.sh_name];
+            size_t maxLen = shstr.size() - sh.sh_name;
+            const char* end = static_cast<const char*>(memchr(namePtr, '\0', maxLen));
+            if (end) {
+                sec.name = std::string(namePtr, end);
+            } else {
+                sec.name = "";
+            }
+        } else {
+            sec.name = "";
+        }
+
         sec.address = sh.sh_addr;
         sec.size = sh.sh_size;
         _sections.push_back(sec);
@@ -297,22 +312,26 @@ void MiniELF::parseSymbols(std::ifstream& file, const std::vector<char>& shstrta
 
     // Populate symbols
     for (const auto& sym : symbols) {
-        if (strtab.empty() || sym.st_name >= strtab.size()) continue;
-
         Symbol s;
 
-        const char* start = &strtab[sym.st_name];
-        const char* end = static_cast<const char*>(memchr(start, '\0', strtab.size() - sym.st_name));
-        s.name = end ? std::string(start, end) : "";
+        if (!strtab.empty() && sym.st_name < strtab.size()) {
+            const char* namePtr = &strtab[sym.st_name];
+            size_t maxLen = strtab.size() - sym.st_name;
+            const char* end = static_cast<const char*>(memchr(namePtr, '\0', maxLen));
+            if (end) {
+                s.name = std::string(namePtr, end);
+            } else {
+                s.name = "";
+            }
+        } else {
+            s.name = "";
+        }
 
         s.address = sym.st_value;
         s.size = sym.st_size;
         s.type = static_cast<SymbolType>(sym.st_info & 0x0F);
         _symbols.push_back(s);
     }
-
-
-
 }
 
 } // namespace minielf

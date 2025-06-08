@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.1.3] - 2025-06-08
+
+### Changed
+- Improved safety and correctness of section and symbol name extraction:
+  - Section names are now extracted using `memchr` to find the first `'\0'` within the section header string table, preventing buffer overrun and handling malformed ELF files more robustly.
+  - Symbol names are now extracted using `memchr` within the symbol string table, with additional checks for empty tables and out-of-bounds indices.
+- The symbol name lookup table (`_symbolByName`) now only includes symbols with non-empty names, preventing accidental collisions and improving lookup reliability.
+
+### Fixed
+- Fixed potential out-of-bounds reads when extracting section and symbol names from their respective string tables.
+- Improved handling of ELF files with missing or malformed string tables.
+
+---
+
 ## [v1.1.2] - 2025-06-08
 
 ### Changed
