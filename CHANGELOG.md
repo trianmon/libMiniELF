@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.1.2] - 2025-06-08
+
+### Changed
+- Improved symbol name extraction in ELF parsing: now uses `memchr` to find the first `'\0'` within the string table, preventing buffer overrun and increasing robustness against malformed ELF files.
+- Added an extra check for an empty string table (`strtab.empty()`) when parsing symbols.
+
+### Fixed
+- Fixed a potential out-of-bounds read when extracting symbol names from the string table.
+  
+---
+
 ## [v1.1.1] - 2025-06-08
 
 ### Added

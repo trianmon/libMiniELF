@@ -3,6 +3,7 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
+#include <string.h>
 
 namespace minielf {
 
@@ -296,14 +297,22 @@ void MiniELF::parseSymbols(std::ifstream& file, const std::vector<char>& shstrta
 
     // Populate symbols
     for (const auto& sym : symbols) {
-        if (sym.st_name >= strtab.size()) continue;
+        if (strtab.empty() || sym.st_name >= strtab.size()) continue;
+
         Symbol s;
-        s.name = std::string(&strtab[sym.st_name]);
+
+        const char* start = &strtab[sym.st_name];
+        const char* end = static_cast<const char*>(memchr(start, '\0', strtab.size() - sym.st_name));
+        s.name = end ? std::string(start, end) : "";
+
         s.address = sym.st_value;
         s.size = sym.st_size;
         s.type = static_cast<SymbolType>(sym.st_info & 0x0F);
         _symbols.push_back(s);
     }
+
+
+
 }
 
 } // namespace minielf
