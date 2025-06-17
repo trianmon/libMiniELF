@@ -9,6 +9,20 @@
 namespace minielf {
 
 /**
+ * @brief ELF64 program header structure.
+ */
+struct Elf64_Phdr {
+    uint32_t p_type;    ///< Segment type
+    uint32_t p_flags;   ///< Segment flags
+    uint64_t p_offset;  ///< Offset of segment in file
+    uint64_t p_vaddr;   ///< Virtual address in memory
+    uint64_t p_paddr;   ///< Physical address (not used on most platforms)
+    uint64_t p_filesz;  ///< Size of segment in file
+    uint64_t p_memsz;   ///< Size of segment in memory
+    uint64_t p_align;   ///< Alignment of segment
+};
+
+/**
  * @brief ELF64 file header structure.
  */
 struct Elf64_Ehdr {
@@ -184,13 +198,62 @@ public:
      */
     std::string getLastError() const { return _lastError; }
 
+    enum class ParseStage { Header, SectionHeaders, Symbols, ProgramHeaders };
+    
+    /**
+     * @brief Get the raw ELF header structure (Elf64_Ehdr).
+     * @return Reference to the internal ELF header structure.
+     */
+    const Elf64_Ehdr& getRawHeader() const;
+
+    /**
+     * @brief Get the raw ELF section headers (Elf64_Shdr).
+     * @return Reference to the vector of section header structures.
+     */
+    const std::vector<Elf64_Shdr>& getSectionHeaders() const;
+
+    /**
+     * @brief Get the size of the ELF file in bytes.
+     * @return File size in bytes, or 0 if file is not accessible.
+     */
+    uint64_t getFileSize() const;
+
+    /**
+     * @brief Get the raw ELF program headers (Elf64_Phdr).
+     * @return Reference to the vector of program header structures.
+     */
+    const std::vector<Elf64_Phdr>& getProgramHeaders() const;
+
+    /**
+     * @brief Get the raw section header string table.
+     * @return Reference to the vector containing the raw section string table.
+     */
+    const std::vector<char>& getSectionStringTableRaw() const;
+
+    /**
+     * @brief Get the stage at which parsing failed.
+     * @return ParseStage enum value indicating the failure stage.
+     */
+    ParseStage getFailureStage() const;
+
+    /**
+     * @brief Get a detailed validation log for the ELF file.
+     * @return String containing validation and parsing details.
+     */
+    std::string getValidationLog() const;
+
 private:
-    std::string _filepath;           ///< Path to the ELF file
-    bool _valid = false;             ///< ELF file validity flag
-    std::vector<Section> _sections;  ///< Parsed sections
-    std::vector<Symbol> _symbols;    ///< Parsed symbols
-    Elf64_Ehdr _elfHeader{};         ///< ELF header structure
-    std::string _lastError;          ///< Last error message
+    std::string _filepath;                    ///< Path to the ELF file
+    bool _valid = false;                      ///< ELF file validity flag
+    std::vector<Section> _sections;           ///< Parsed sections
+    std::vector<Symbol> _symbols;             ///< Parsed symbols
+    Elf64_Ehdr _elfHeader{};                  ///< ELF header structure
+    std::vector<Elf64_Shdr> _sectionHeaders;  ///< Section headers
+    std::vector<Elf64_Phdr> _programHeaders;  ///< Program headers
+    std::vector<char> _sectionStringTableRaw; ///< Raw section string table
+    std::string _lastError;                   ///< Last error message
+    
+    ParseStage _failureStage = ParseStage::Header; ///< Stage of failure during parsing
 
     /**
      * @brief Parse the ELF file and populate sections and symbols.

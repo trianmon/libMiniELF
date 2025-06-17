@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.2.0] - 2025-06-18
+
+### Added
+- Public access to raw ELF structures:
+  - `getRawHeader()` returns the internal `Elf64_Ehdr` header.
+  - `getSectionHeaders()` returns all raw section headers (`Elf64_Shdr`).
+  - `getProgramHeaders()` returns all raw program headers (`Elf64_Phdr`).
+  - `getSectionStringTableRaw()` returns the raw section header string table.
+  - `getFileSize()` returns the ELF file size in bytes.
+- Error diagnostics and validation:
+  - `getFailureStage()` returns the parsing stage where failure occurred.
+  - `getValidationLog()` provides a detailed log of parsing and validation status.
+- Doxygen-style documentation for all new API methods.
+- Unit tests for all new API methods in `test_minielf.cpp`.
+
+### Changed
+- Internal storage of section headers, program headers, and section string table for direct access.
+- Improved error reporting and diagnostics for all parsing stages.
+
+### Fixed
+- Correct handling of ELF files with missing or malformed program headers and section headers.
+- More robust parsing and validation for edge cases and corrupted files.
+
+---
+
 ## [v1.1.3] - 2025-06-08
 
 ### Changed

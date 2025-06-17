@@ -71,6 +71,40 @@ int main() {
     assert(meta.machine == 62);  // EM_X86_64
     assert(meta.type != 0);
 
+    // Test: getRawHeader
+    const auto& ehdr = elf.getRawHeader();
+    assert(ehdr.e_entry == meta.entry);
+    assert(ehdr.e_machine == meta.machine);
+
+    // Test: getSectionHeaders
+    const auto& shdrs = elf.getSectionHeaders();
+    assert(!shdrs.empty());
+    assert(shdrs.size() == sections.size() || shdrs.size() == ehdr.e_shnum);
+
+    // Test: getProgramHeaders
+    const auto& phdrs = elf.getProgramHeaders();
+    // Program headers may be empty for relocatable objects, but should not crash
+    (void)phdrs;
+
+    // Test: getFileSize
+    uint64_t fsize = elf.getFileSize();
+    assert(fsize > 0);
+
+    // Test: getSectionStringTableRaw
+    const auto& shstrtab = elf.getSectionStringTableRaw();
+    assert(!shstrtab.empty());
+
+    // Test: getFailureStage (should be Header if no error)
+    auto stage = elf.getFailureStage();
+    assert(stage == minielf::MiniELF::ParseStage::Header ||
+           stage == minielf::MiniELF::ParseStage::Symbols ||
+           stage == minielf::MiniELF::ParseStage::ProgramHeaders);
+
+    // Test: getValidationLog
+    std::string log = elf.getValidationLog();
+    assert(!log.empty());
+    std::cout << "[Validation log]\n" << log << std::endl;
+
     std::cout << "All MiniELF tests passed.\n";
     return 0;
 }

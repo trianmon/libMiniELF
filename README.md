@@ -13,6 +13,8 @@ It allows inspection of ELF headers, sections, symbol tables (`.symtab` and `.dy
 | **Symbol table parsing**  | Reads `.symtab` and `.dynsym` symbols            |
 | **Section/symbol access** | Lists ELF sections, functions, and symbols       |
 | **Address resolution**    | Resolves addresses to closest matching symbols   |
+| **Raw ELF access**        | Access raw ELF headers, section/program headers, and string tables |
+| **Diagnostics**           | Detailed validation log and error stage reporting |
 | **ELF32 detection**       | Gracefully skips unsupported 32-bit binaries     |
 | **CLI utility**           | Includes `dump_elf` tool for ELF inspection      |
 | **Unit tested**           | CTest-based validation with real ELF files       |
@@ -134,6 +136,29 @@ int main() {
     auto meta = elf.getMetadata();
     std::cout << "Entry point: 0x" << std::hex << meta.entry << std::dec << std::endl;
     std::cout << "Machine: " << meta.machine << ", Type: " << meta.type << std::endl;
+    
+    // Access raw ELF header
+    const auto& ehdr = elf.getRawHeader();
+    std::cout << "ELF entry point: 0x" << std::hex << ehdr.e_entry << std::dec << std::endl;
+
+    // Access raw section headers
+    const auto& shdrs = elf.getSectionHeaders();
+    std::cout << "Section headers count: " << shdrs.size() << std::endl;
+
+    // Access raw program headers
+    const auto& phdrs = elf.getProgramHeaders();
+    std::cout << "Program headers count: " << phdrs.size() << std::endl;
+
+    // Access raw section header string table
+    const auto& shstrtab = elf.getSectionStringTableRaw();
+    std::cout << "Section string table size: " << shstrtab.size() << std::endl;
+
+    // Get file size
+    uint64_t fileSize = elf.getFileSize();
+    std::cout << "ELF file size: " << fileSize << " bytes" << std::endl;
+
+    // Get validation log
+    std::cout << elf.getValidationLog() << std::endl;
 
     return 0;
 }
@@ -143,12 +168,28 @@ int main() {
 
 ## Error Handling
 
-If parsing fails or the ELF file is invalid, you can retrieve the error message via:
+If parsing fails or the ELF file is invalid, you can retrieve detailed error information:
 
 ```cpp
 minielf::MiniELF elf("binary.elf");
 if (!elf.isValid()) {
+    // Print last error message
     std::cerr << elf.getLastError() << std::endl;
+
+    // Print the stage where parsing failed
+    auto stage = elf.getFailureStage();
+    std::cerr << "Failure stage: ";
+    switch (stage) {
+        case minielf::MiniELF::ParseStage::Header: std::cerr << "Header"; break;
+        case minielf::MiniELF::ParseStage::SectionHeaders: std::cerr << "SectionHeaders"; break;
+        case minielf::MiniELF::ParseStage::Symbols: std::cerr << "Symbols"; break;
+        case minielf::MiniELF::ParseStage::ProgramHeaders: std::cerr << "ProgramHeaders"; break;
+        default: std::cerr << "Unknown"; break;
+    }
+    std::cerr << std::endl;
+
+    // Print detailed validation log
+    std::cerr << elf.getValidationLog() << std::endl;
 }
 ```
 

@@ -184,6 +184,7 @@ ElfMetadata MiniELF::getMetadata() const {
  * @brief Parse the ELF file and populate sections and symbols.
  */
 void MiniELF::parse() {
+    _failureStage = ParseStage::Header;
     std::ifstream file(_filepath, std::ios::binary);
     if (!file) {
         setError("MiniELF error: failed to open file: " + _filepath);
@@ -213,6 +214,7 @@ void MiniELF::parse() {
         return;
     }
 
+    _failureStage = ParseStage::SectionHeaders;
     // Read section headers
     file.seekg(ehdr.e_shoff, std::ios::beg);
     std::vector<Elf64_Shdr> shdrs(ehdr.e_shnum);
@@ -221,6 +223,7 @@ void MiniELF::parse() {
     }
 
     // Read section header string table
+    _sectionHeaders = shdrs;
     const auto& shstrtab = shdrs[ehdr.e_shstrndx];
     std::vector<char> shstr(shstrtab.sh_size);
     file.seekg(shstrtab.sh_offset, std::ios::beg);
@@ -250,7 +253,19 @@ void MiniELF::parse() {
         _sections.push_back(sec);
     }
 
+    _sectionStringTableRaw = shstr; // Store the raw section string table
+
+    _failureStage = ParseStage::Symbols;
     parseSymbols(file, shstr, shdrs, ehdr);
+
+    if (_elfHeader.e_phoff != 0 && _elfHeader.e_phnum > 0) {
+        _failureStage = ParseStage::ProgramHeaders;
+        file.seekg(_elfHeader.e_phoff, std::ios::beg);
+        _programHeaders.resize(_elfHeader.e_phnum);
+        for (auto& ph : _programHeaders) {
+            file.read(reinterpret_cast<char*>(&ph), sizeof(ph));
+        }
+    }
     _valid = true;
 }
 
@@ -332,6 +347,89 @@ void MiniELF::parseSymbols(std::ifstream& file, const std::vector<char>& shstrta
         s.type = static_cast<SymbolType>(sym.st_info & 0x0F);
         _symbols.push_back(s);
     }
+}
+
+
+/**
+ * @brief Get the raw ELF header structure (Elf64_Ehdr).
+ * @return Reference to the internal ELF header structure.
+ */
+const Elf64_Ehdr& MiniELF::getRawHeader() const {
+    return _elfHeader;
+}
+
+/**
+ * @brief Get the raw ELF section headers (Elf64_Shdr).
+ * @return Reference to the vector of section header structures.
+ */
+const std::vector<Elf64_Shdr>& MiniELF::getSectionHeaders() const {
+    return _sectionHeaders;
+}
+
+/**
+ * @brief Get the size of the ELF file in bytes.
+ * @return File size in bytes, or 0 if file is not accessible.
+ */
+uint64_t MiniELF::getFileSize() const {
+    std::ifstream file(_filepath, std::ios::binary | std::ios::ate);
+    if (!file) return 0;
+    return static_cast<uint64_t>(file.tellg());
+}
+
+/**
+ * @brief Get the raw ELF program headers (Elf64_Phdr).
+ * @return Reference to the vector of program header structures.
+ */
+const std::vector<Elf64_Phdr>& MiniELF::getProgramHeaders() const {
+    return _programHeaders;
+}
+
+/**
+ * @brief Get the raw section header string table.
+ * @return Reference to the vector containing the raw section string table.
+ */
+const std::vector<char>& MiniELF::getSectionStringTableRaw() const {
+    return _sectionStringTableRaw;
+}
+
+/**
+ * @brief Get the stage at which parsing failed.
+ * @return ParseStage enum value indicating the failure stage.
+ */
+minielf::MiniELF::ParseStage MiniELF::getFailureStage() const {
+    return _failureStage;
+}
+
+/**
+ * @brief Get a detailed validation log for the ELF file.
+ * @return String containing validation and parsing details.
+ */
+std::string MiniELF::getValidationLog() const {
+    std::string log;
+
+    if (_lastError.empty() && _valid) {
+        log += "ELF file parsed successfully.\n";
+    } else {
+        log += "ELF file parsing failed.\n";
+        log += "Error: " + _lastError + "\n";
+        log += "Failure stage: ";
+        switch (_failureStage) {
+            case ParseStage::Header: log += "Header"; break;
+            case ParseStage::SectionHeaders: log += "SectionHeaders"; break;
+            case ParseStage::Symbols: log += "Symbols"; break;
+            case ParseStage::ProgramHeaders: log += "ProgramHeaders"; break;
+            default: log += "Unknown"; break;
+        }
+        log += "\n";
+    }
+
+    log += "ELF file: " + _filepath + "\n";
+    log += "Valid: " + std::string(_valid ? "yes" : "no") + "\n";
+    log += "Sections parsed: " + std::to_string(_sections.size()) + "\n";
+    log += "Symbols parsed: " + std::to_string(_symbols.size()) + "\n";
+    log += "Program headers parsed: " + std::to_string(_programHeaders.size()) + "\n";
+
+    return log;
 }
 
 } // namespace minielf
