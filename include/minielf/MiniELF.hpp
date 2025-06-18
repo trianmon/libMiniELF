@@ -242,7 +242,20 @@ public:
      */
     std::string getValidationLog() const;
 
+    
+    /**
+     * @brief Enable unsafe or debug access to internal raw ELF structures.
+     *
+     * This method allows advanced users or debugging tools to access internal
+     * data structures directly, potentially bypassing some safety checks.
+     * Use with caution: enabling unsafe access may expose implementation details
+     * or lead to undefined behavior if misused.
+     */
+    void enableUnsafeAccess();
+
 private:
+    bool _unsafeAccessEnabled = false;        ///< Flag to allow unsafe access to raw data
+
     std::string _filepath;                    ///< Path to the ELF file
     bool _valid = false;                      ///< ELF file validity flag
     std::vector<Section> _sections;           ///< Parsed sections

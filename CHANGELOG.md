@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.2.1] - 2025-06-18
+
+### Added
+- `enableUnsafeAccess()` method: allows advanced users or debugging tools to enable unsafe or debug access to internal raw ELF structures. When enabled, some safety checks are bypassed and internal data may be exposed for advanced inspection or tooling.
+
+---
+
 ## [v1.2.0] - 2025-06-18
 
 ### Added

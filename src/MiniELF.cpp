@@ -54,7 +54,7 @@ void MiniELF::buildLookups() const {
  * @return true if valid, false otherwise.
  */
 bool MiniELF::isValid() const {
-    return _valid;
+    return _valid || _unsafeAccessEnabled;
 }
 
 /**
@@ -430,6 +430,13 @@ std::string MiniELF::getValidationLog() const {
     log += "Program headers parsed: " + std::to_string(_programHeaders.size()) + "\n";
 
     return log;
+}
+
+/**
+* @brief Enable unsafe or debug access to internal raw ELF structures.
+*/
+void MiniELF::enableUnsafeAccess() {
+    _unsafeAccessEnabled = true;
 }
 
 } // namespace minielf
