@@ -215,20 +215,27 @@ void MiniELF::parse() {
     }
 
     _failureStage = ParseStage::SectionHeaders;
-    // Read section headers
     file.seekg(ehdr.e_shoff, std::ios::beg);
     std::vector<Elf64_Shdr> shdrs(ehdr.e_shnum);
     for (auto& sh : shdrs) {
         file.read(reinterpret_cast<char*>(&sh), sizeof(sh));
+        if (file.gcount() != sizeof(sh)) {
+            setError("MiniELF error: failed to read section header");
+            return;
+        }
     }
 
-    // Read section header string table
-    _sectionHeaders = shdrs;
     const auto& shstrtab = shdrs[ehdr.e_shstrndx];
     std::vector<char> shstr(shstrtab.sh_size);
     file.seekg(shstrtab.sh_offset, std::ios::beg);
     file.read(shstr.data(), shstr.size());
+    if (file.gcount() != static_cast<std::streamsize>(shstr.size())) {
+        setError("MiniELF error: failed to read section string table");
+        return;
+    }
 
+    _sectionHeaders = shdrs;
+    _sectionStringTableRaw = shstr;
     _elfHeader = ehdr;
 
     // Populate sections
@@ -253,21 +260,25 @@ void MiniELF::parse() {
         _sections.push_back(sec);
     }
 
-    _sectionStringTableRaw = shstr; // Store the raw section string table
-
     _failureStage = ParseStage::Symbols;
     parseSymbols(file, shstr, shdrs, ehdr);
 
-    if (_elfHeader.e_phoff != 0 && _elfHeader.e_phnum > 0) {
+    if (ehdr.e_phoff != 0 && ehdr.e_phnum > 0) {
         _failureStage = ParseStage::ProgramHeaders;
-        file.seekg(_elfHeader.e_phoff, std::ios::beg);
-        _programHeaders.resize(_elfHeader.e_phnum);
+        file.seekg(ehdr.e_phoff, std::ios::beg);
+        _programHeaders.resize(ehdr.e_phnum);
         for (auto& ph : _programHeaders) {
             file.read(reinterpret_cast<char*>(&ph), sizeof(ph));
+            if (file.gcount() != sizeof(ph)) {
+                setError("MiniELF error: failed to read program header");
+                return;
+            }
         }
     }
+
     _valid = true;
 }
+
 
 /**
  * @brief Parse symbols from the ELF file.

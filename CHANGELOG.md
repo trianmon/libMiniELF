@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.2.2] - 2025-06-19
+
+### Changed
+- Improved reliability of `MiniELF::parse()`:
+  - Added explicit `gcount` checks when reading the ELF header and section/program headers to ensure correct byte counts.
+  - `_valid = true` is now set only after all parsing stages (Header, SectionHeaders, Symbols, ProgramHeaders) complete successfully.
+  - Clarified handling for cases where `e_shoff == 0` or `e_shnum == 0` — now properly diagnosed and handled for safe exit.
+
+### Fixed
+- Prevented false positives when parsing partially corrupted ELF headers.
+- Improved error logging for failures when reading the section name table and for unsupported ELF32 headers.
+
+### Compatibility
+- Fully backward compatible with v1.2.1.
+- No changes required for user code or dependent library rebuilds.
+
+---
+
 ## [v1.2.1] - 2025-06-18
 
 ### Added
